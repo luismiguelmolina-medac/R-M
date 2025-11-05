@@ -5,6 +5,7 @@ $(document).ready(function () {
 
     cargarPersonajes(lista, page);
 
+
     lista.scroll(function () {
         let pos = lista.scrollTop();
         let altura = lista.height();
@@ -15,6 +16,18 @@ $(document).ready(function () {
         if (distanciaRestante < 400 && !cargando) {
             cargarPersonajes(lista);
         }
+    });
+
+    let delayTimer;
+    $(".left-column input").keyup(function (event) {
+        clearTimeout(delayTimer);
+        if (event.key === "Enter") {
+            $("#buscar").hide();
+            return;
+        }
+        delayTimer = setTimeout(() => {
+            cargarBusqueda($(this).val());
+        }, 1000);
     });
 });
 
@@ -39,4 +52,50 @@ function cargarPersonajes(lista) {
     }).catch(error => {
         console.log(error);
     });
+}
+
+function cargarBusqueda(texto) {
+    $.get("https://rickandmortyapi.com/api/character?name=" + texto).then(response => {
+        let buscar = $("#buscar");
+        buscar.empty();
+        let i = 0;
+        response.results.forEach(character => {
+            if (i >= 5) return;
+            let item = `<p onclick="setBuscar('${character.name}')">${character.name}</p>`;
+            $("#buscar").append(item);
+            i++;
+        });
+        buscar.show();
+    }).catch(error => {
+        console.log(error);
+    });
+}
+
+function setBuscar(texto) {
+    $("#buscar").hide();
+    $(".left-column input").val(texto);
+}
+
+function motrarGaleria() {
+    let scrollTop = $(".item-list").scrollTop();
+    let primerVisible = null;
+
+    $(".item-list").children(".item").each(function () {
+        let elem = $(this);
+        let offset = elem.position().top; // posición relativa dentro del contenedor
+
+        if (offset + elem.outerHeight() > 0) { // parte visible
+            primerVisible = elem;
+            return false; // detener el each (ya lo encontramos)
+        }
+    });
+
+    $(".gallery  > div").empty();
+    for (let i = 0; i < 9; i++) {
+        let elem = primerVisible.nextAll(".item").eq(i);
+        if (elem.length === 0) break;
+
+        $(".gallery > div").append('<div class="col-4"><img src="' + elem.find("img").attr("src") + '" alt="Character Image"></div>');
+        ;
+    }
 }
